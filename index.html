@@ -20,15 +20,19 @@
     <p id="barcode-result">🔍 انتظر قراءة الباركود...</p>
     
     <script>
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let context = canvas.getContext('2d');
         let scanning = false;
 
         function startCamera() {
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then(function(stream) {
-                    let video = document.getElementById('video');
                     video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
                     scanning = true;
-                    scanBarcode();
+                    requestAnimationFrame(scanBarcode);
                 })
                 .catch(function(error) {
                     alert("⚠️ لا يمكن فتح الكاميرا! تأكد من منح الإذن.");
@@ -39,21 +43,23 @@
         function scanBarcode() {
             if (!scanning) return;
 
-            let video = document.getElementById('video');
-            let canvas = document.getElementById('canvas');
-            let context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            let code = jsQR(imageData.data, canvas.width, canvas.height);
-            
-            if (code) {
-                document.getElementById('barcode-result').innerText = "✅ الباركود: " + code.data;
-                scanning = false;  // وقف الفحص بعد العثور على الباركود
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                let code = jsQR(imageData.data, canvas.width, canvas.height, {
+                    inversionAttempts: "dontInvert"
+                });
+
+                if (code) {
+                    document.getElementById('barcode-result').innerText = "✅ الباركود: " + code.data;
+                    scanning = false;  // وقف الفحص بعد العثور على الباركود
+                } else {
+                    requestAnimationFrame(scanBarcode); // استمرار البحث عن باركود
+                }
             } else {
-                requestAnimationFrame(scanBarcode); // استمرار البحث عن باركود
+                requestAnimationFrame(scanBarcode);
             }
         }
     </script>
