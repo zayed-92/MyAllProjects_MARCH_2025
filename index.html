@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📷 قارئ الباركود ZAYED ALASMREI</title>
+    <title>📷 قارئ الباركود</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
@@ -12,19 +12,23 @@
     </style>
 </head>
 <body>
-    <h2>📷 اضغط لفتح الكاميرا الخلفية</h2>
+    <h2>📷 توجيه الكاميرا إلى الباركود لقراءته</h2>
     <video id="video" autoplay playsinline></video>
     <br>
     <button onclick="startCamera()">📸 تشغيل الكاميرا الخلفية</button>
-    <button onclick="captureImage()">📷 التقاط الصورة</button>
     <canvas id="canvas" style="display:none;"></canvas>
-    <p id="barcode-result"></p>
+    <p id="barcode-result">🔍 انتظر قراءة الباركود...</p>
     
     <script>
+        let scanning = false;
+
         function startCamera() {
             navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then(function(stream) {
-                    document.getElementById('video').srcObject = stream;
+                    let video = document.getElementById('video');
+                    video.srcObject = stream;
+                    scanning = true;
+                    scanBarcode();
                 })
                 .catch(function(error) {
                     alert("⚠️ لا يمكن فتح الكاميرا! تأكد من منح الإذن.");
@@ -32,7 +36,9 @@
                 });
         }
 
-        function captureImage() {
+        function scanBarcode() {
+            if (!scanning) return;
+
             let video = document.getElementById('video');
             let canvas = document.getElementById('canvas');
             let context = canvas.getContext('2d');
@@ -44,9 +50,10 @@
             let code = jsQR(imageData.data, canvas.width, canvas.height);
             
             if (code) {
-                document.getElementById('barcode-result').innerText = "📌 الباركود: " + code.data;
+                document.getElementById('barcode-result').innerText = "✅ الباركود: " + code.data;
+                scanning = false;  // وقف الفحص بعد العثور على الباركود
             } else {
-                document.getElementById('barcode-result').innerText = "⚠️ لم يتم العثور على باركود!";
+                requestAnimationFrame(scanBarcode); // استمرار البحث عن باركود
             }
         }
     </script>
