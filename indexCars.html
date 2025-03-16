@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📷 قراءة لوحات المركبات</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        video, canvas { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
+        button { margin-top: 10px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
+        #result { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>📷 توجيه الكاميرا إلى لوحة المركبة لقراءتها</h2>
+    <video id="video" autoplay playsinline></video>
+    <br>
+    <button onclick="startCamera()">📸 تشغيل الكاميرا الخلفية</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <p id="result">🔍 انتظر قراءة لوحة المركبة...</p>
+    
+    <script>
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let context = canvas.getContext('2d');
+        let scanning = false;
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
+                    scanning = true;
+                    requestAnimationFrame(scanLicensePlate);
+                });
+        }
+
+        function scanLicensePlate() {
+            if (!scanning) return;
+
+            // رسم الفيديو على الكانفاس
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // استخراج صورة من الكانفاس
+            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            let image = imageData.data;
+
+            // قراءة النص باستخدام Tesseract.js
+            Tesseract.recognize(
+                image, // الصورة المستخرجة من الكاميرا
+                'eng+ara',  // اللغتين: الإنجليزية والعربية
+                {
+                    logger: (m) => console.log(m) // لعرض تقدم العملية
+                }
+            ).then(({ data: { text } }) => {
+                document.getElementById('result').innerText = "النص الموجود: " + text;
+            });
+
+            // استمر في المسح
+            requestAnimationFrame(scanLicensePlate);
+        }
+    </script>
+</body>
+</html>
