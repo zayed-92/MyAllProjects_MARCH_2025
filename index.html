@@ -3,22 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📷 فتح كاميرا الجوال</title>
+    <title>📷 قارئ الباركود</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
-        video { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
+        video, canvas { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
         button { margin-top: 10px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2>📷 اضغط لفتح الكاميرا</h2>
-    <video id="video" autoplay></video>
+    <h2>📷 اضغط لفتح الكاميرا الخلفية</h2>
+    <video id="video" autoplay playsinline></video>
     <br>
-    <button onclick="startCamera()">📸 تشغيل الكاميرا</button>
+    <button onclick="startCamera()">📸 تشغيل الكاميرا الخلفية</button>
+    <button onclick="captureImage()">📷 التقاط الصورة</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <p id="barcode-result"></p>
     
     <script>
         function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then(function(stream) {
                     document.getElementById('video').srcObject = stream;
                 })
@@ -26,6 +30,24 @@
                     alert("⚠️ لا يمكن فتح الكاميرا! تأكد من منح الإذن.");
                     console.error("خطأ في تشغيل الكاميرا:", error);
                 });
+        }
+
+        function captureImage() {
+            let video = document.getElementById('video');
+            let canvas = document.getElementById('canvas');
+            let context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            let code = jsQR(imageData.data, canvas.width, canvas.height);
+            
+            if (code) {
+                document.getElementById('barcode-result').innerText = "📌 الباركود: " + code.data;
+            } else {
+                document.getElementById('barcode-result').innerText = "⚠️ لم يتم العثور على باركود!";
+            }
         }
     </script>
 </body>
