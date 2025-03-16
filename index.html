@@ -54,7 +54,7 @@
 
                 if (code) {
                     document.getElementById('barcode-result').innerText = "✅ الباركود: " + code.data;
-                    scanning = false;  // وقف الفحص بعد العثور على الباركود
+                    setTimeout(() => { requestAnimationFrame(scanBarcode); }, 1000); // استمر في الفحص بعد 1 ثانية
                 } else {
                     requestAnimationFrame(scanBarcode); // استمرار البحث عن باركود
                 }
@@ -62,6 +62,9 @@
                 requestAnimationFrame(scanBarcode);
             }
         }
+
+        // تشغيل الكاميرا تلقائيًا عند تحميل الصفحة
+        window.onload = startCamera;
     </script>
 </body>
 </html>
