@@ -46,7 +46,7 @@
         $(document).ready(function () {
             // تحميل البيانات من ملف Excel
             $.ajax({
-                url: 'https://raw.githubusercontent.com/zayed-92/testPython/main/appointments.xlsx', // الرابط المباشر للملف في GitHub
+                url: 'appointments.xlsx', // الرابط المباشر للملف في GitHub
                 type: 'GET',
                 responseType: 'arraybuffer',
                 success: function(data) {
