@@ -3,64 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📷 قراءة لوحات المركبات</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <title>التقاط صورة للوحة السيارة</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        video, canvas { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
-        button { margin-top: 10px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
-        #result { margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        video, canvas {
+            width: 80%;
+            max-width: 600px;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
     </style>
 </head>
 <body>
-    <h2>📷 توجيه الكاميرا إلى لوحة المركبة لقراءتها</h2>
-    <video id="video" autoplay playsinline></video>
+
+    <h2>التقاط صورة للوحة السيارة</h2>
+    <button onclick="startCamera()">تشغيل الكاميرا</button>
+    <button onclick="captureImage()">التقاط الصورة</button>
     <br>
-    <button onclick="startCamera()">📸 تشغيل الكاميرا الخلفية</button>
+    <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
-    <p id="result">🔍 انتظر قراءة لوحة المركبة...</p>
-    
+    <br>
+    <img id="capturedImage" style="display:none; width: 80%; max-width: 600px; margin-top: 20px;">
+
     <script>
-        let video = document.getElementById('video');
-        let canvas = document.getElementById('canvas');
-        let context = canvas.getContext('2d');
-        let scanning = false;
+        let videoStream = null;
 
         function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
+                    let video = document.getElementById('video');
                     video.srcObject = stream;
-                    video.setAttribute("playsinline", true);
-                    video.play();
-                    scanning = true;
-                    requestAnimationFrame(scanLicensePlate);
+                    videoStream = stream; // حفظ المرجع لإيقاف الكاميرا لاحقًا
+                })
+                .catch(function(error) {
+                    alert("حدث خطأ: لا يمكن تشغيل الكاميرا. تأكد من إعطاء الإذن.");
+                    console.error(error);
                 });
         }
 
-        function scanLicensePlate() {
-            if (!scanning) return;
+        function captureImage() {
+            let video = document.getElementById('video');
+            let canvas = document.getElementById('canvas');
+            let img = document.getElementById('capturedImage');
 
-            // رسم الفيديو على الكانفاس
+            // ضبط حجم الـ Canvas بنفس حجم الفيديو
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // التقاط الصورة
+            let context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // استخراج صورة من الكانفاس
-            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            let image = imageData.data;
+            // تحويل الصورة إلى بيانات URL وعرضها في عنصر <img>
+            img.src = canvas.toDataURL('image/png');
+            img.style.display = "block"; // إظهار الصورة بعد التقاطها
 
-            // قراءة النص باستخدام Tesseract.js
-            Tesseract.recognize(
-                image, // الصورة المستخرجة من الكاميرا
-                'eng+ara',  // اللغتين: الإنجليزية والعربية
-                {
-                    logger: (m) => console.log(m) // لعرض تقدم العملية
-                }
-            ).then(({ data: { text } }) => {
-                document.getElementById('result').innerText = "النص الموجود: " + text;
-            });
-
-            // استمر في المسح
-            requestAnimationFrame(scanLicensePlate);
+            // إيقاف تشغيل الكاميرا بعد التقاط الصورة
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
         }
     </script>
+
 </body>
 </html>
