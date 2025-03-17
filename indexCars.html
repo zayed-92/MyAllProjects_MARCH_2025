@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التقاط صورة للوحة السيارة</title>
+    <title>قراءة لوحة السيارة</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,7 +11,7 @@
             background: #f4f4f4;
             padding: 20px;
         }
-        video, canvas {
+        video, canvas, img {
             width: 80%;
             max-width: 600px;
             border: 2px solid #3498db;
@@ -25,34 +25,52 @@
             color: white;
             border: none;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px;
             border-radius: 5px;
         }
         button:hover {
             background: #2980b9;
         }
+        #result {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <h2>التقاط صورة للوحة السيارة</h2>
+    <h2>التقاط صورة وقراءة أرقام وحروف لوحة السيارة</h2>
     <button onclick="startCamera()">تشغيل الكاميرا</button>
     <button onclick="captureImage()">التقاط الصورة</button>
+    <button onclick="restartCamera()">إعادة تشغيل الكاميرا</button>
+    
     <br>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
     <br>
     <img id="capturedImage" style="display:none; width: 80%; max-width: 600px; margin-top: 20px;">
+    
+    <h3>النص المستخرج من الصورة:</h3>
+    <div id="result">لم يتم التعرف على النص بعد</div>
+
+    <!-- تضمين مكتبة Tesseract.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.0.2/tesseract.min.js"></script>
 
     <script>
         let videoStream = null;
 
         function startCamera() {
+            if (videoStream) {
+                stopCamera(); // إيقاف أي كاميرا قيد التشغيل قبل تشغيل أخرى
+            }
+
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
                     let video = document.getElementById('video');
                     video.srcObject = stream;
-                    videoStream = stream; // حفظ المرجع لإيقاف الكاميرا لاحقًا
+                    videoStream = stream;
                 })
                 .catch(function(error) {
                     alert("حدث خطأ: لا يمكن تشغيل الكاميرا. تأكد من إعطاء الإذن.");
@@ -65,22 +83,57 @@
             let canvas = document.getElementById('canvas');
             let img = document.getElementById('capturedImage');
 
-            // ضبط حجم الـ Canvas بنفس حجم الفيديو
+            if (!videoStream) {
+                alert("يجب تشغيل الكاميرا أولاً!");
+                return;
+            }
+
+            // ضبط حجم الـ Canvas ليكون بنفس حجم الفيديو
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            // التقاط الصورة
+            // التقاط الصورة من الفيديو
             let context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // تحويل الصورة إلى بيانات URL وعرضها في عنصر <img>
+            // تحويل الصورة إلى بيانات URL وعرضها في <img>
             img.src = canvas.toDataURL('image/png');
-            img.style.display = "block"; // إظهار الصورة بعد التقاطها
+            img.style.display = "block";
 
             // إيقاف تشغيل الكاميرا بعد التقاط الصورة
+            stopCamera();
+
+            // بدء عملية التعرف على النصوص من الصورة
+            recognizeText(img.src);
+        }
+
+        function recognizeText(imageData) {
+            document.getElementById("result").innerText = "جارٍ التعرف على النص...";
+
+            Tesseract.recognize(
+                imageData,
+                'eng+ara', // التعرف على اللغات العربية والإنجليزية
+                {
+                    logger: m => console.log(m) // عرض التقدم في التعرف على النصوص
+                }
+            ).then(({ data: { text } }) => {
+                document.getElementById("result").innerText = "النص المستخرج: " + text;
+            }).catch(error => {
+                document.getElementById("result").innerText = "حدث خطأ في التعرف على النص!";
+                console.error(error);
+            });
+        }
+
+        function stopCamera() {
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
             }
+        }
+
+        function restartCamera() {
+            stopCamera();
+            startCamera();
         }
     </script>
 
