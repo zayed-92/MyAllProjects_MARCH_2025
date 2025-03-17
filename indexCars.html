@@ -42,7 +42,7 @@
 <body>
 
     <h2>التقاط صورة وقراءة أرقام وحروف لوحة السيارة</h2>
-    <button onclick="startCamera()">تشغيل الكاميرا</button>
+    <button onclick="startCamera()">تشغيل الكاميرا الخلفية</button>
     <button onclick="captureImage()">التقاط الصورة</button>
     <button onclick="restartCamera()">إعادة تشغيل الكاميرا</button>
     
@@ -63,19 +63,21 @@
 
         function startCamera() {
             if (videoStream) {
-                stopCamera(); // إيقاف أي كاميرا قيد التشغيل قبل تشغيل أخرى
+                stopCamera();
             }
 
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    let video = document.getElementById('video');
-                    video.srcObject = stream;
-                    videoStream = stream;
-                })
-                .catch(function(error) {
-                    alert("حدث خطأ: لا يمكن تشغيل الكاميرا. تأكد من إعطاء الإذن.");
-                    console.error(error);
-                });
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: { exact: "environment" } } // تشغيل الكاميرا الخلفية
+            })
+            .then(function(stream) {
+                let video = document.getElementById('video');
+                video.srcObject = stream;
+                videoStream = stream;
+            })
+            .catch(function(error) {
+                alert("حدث خطأ: لا يمكن تشغيل الكاميرا. تأكد من إعطاء الإذن.");
+                console.error(error);
+            });
         }
 
         function captureImage() {
