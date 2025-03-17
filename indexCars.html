@@ -112,13 +112,18 @@
         function recognizeText(imageData) {
             document.getElementById("result").innerText = "جارٍ التعرف على النص...";
 
+            // تحسين النصوص بشكل أفضل باستخدام إعدادات Tesseract المتقدمة
             Tesseract.recognize(
                 imageData,
                 'eng+ara', // التعرف على اللغات العربية والإنجليزية
                 {
-                    logger: m => console.log(m) // عرض التقدم في التعرف على النصوص
+                    logger: m => console.log(m), // عرض التقدم في التعرف على النصوص
+                    tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', // السماح فقط بالأرقام والحروف
+                    preserve_interword_spaces: true,
+                    fast: true // يمكن تحسين الأداء عبر إضافة إعدادات أخرى مثل هذا
                 }
             ).then(({ data: { text } }) => {
+                // عرض النص المستخرج
                 document.getElementById("result").innerText = "النص المستخرج: " + text;
             }).catch(error => {
                 document.getElementById("result").innerText = "حدث خطأ في التعرف على النص!";
