@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تفاصيل الموعد</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.1/dist/xlsx.full.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body { direction: rtl; text-align: right; background-color: #f8f9fa; }
@@ -43,6 +42,7 @@
     </div>
 
     <script>
+        // استخراج البيانات من الرابط
         function getQueryParameter(name) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(name);
@@ -53,61 +53,52 @@
             const details = getQueryParameter("details");
 
             if (date && details) {
+                // عرض التفاصيل في الصفحة
                 document.getElementById("date").textContent = date;
                 document.getElementById("details").textContent = details;
 
-                $.ajax({
-                    url: 'https://github.com/zayed-92/testPython/main/appointments.xlsx', // مسار الملف في المشروع
-                    type: 'GET',
-                    responseType: 'arraybuffer',
-                    success: function(data) {
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(sheet);
+                // تخزين البيانات المعدلة عند الحاجة
+                let currentDate = date;
+                let currentDetails = details;
 
-                        const appointment = jsonData.find(function(appointment) {
-                            return appointment.date === date && appointment.details === details;
-                        });
+                // عند الضغط على زر تعديل
+                document.getElementById("editBtn").onclick = function() {
+                    document.getElementById("editForm").style.display = "block";
+                    document.getElementById("editDate").value = currentDate;
+                    document.getElementById("editDetails").value = currentDetails;
+                };
 
-                        if (appointment) {
-                            let currentDate = appointment.date;
-                            let currentDetails = appointment.details;
+                // عند إرسال النموذج لتعديل الموعد
+                document.getElementById("editAppointmentForm").onsubmit = function(event) {
+                    event.preventDefault();
+                    currentDate = document.getElementById("editDate").value;
+                    currentDetails = document.getElementById("editDetails").value;
 
-                            document.getElementById("editBtn").onclick = function() {
-                                document.getElementById("editForm").style.display = "block";
-                                document.getElementById("editDate").value = currentDate;
-                                document.getElementById("editDetails").value = currentDetails;
-                            };
+                    document.getElementById("date").textContent = currentDate;
+                    document.getElementById("details").textContent = currentDetails;
+                    document.getElementById("editForm").style.display = "none";
+                };
 
-                            document.getElementById("editAppointmentForm").onsubmit = function(event) {
-                                event.preventDefault();
-                                currentDate = document.getElementById("editDate").value;
-                                currentDetails = document.getElementById("editDetails").value;
-                                document.getElementById("date").textContent = currentDate;
-                                document.getElementById("details").textContent = currentDetails;
-                                document.getElementById("editForm").style.display = "none";
-                            };
+                // عند الضغط على زر إلغاء التعديل
+                document.getElementById("cancelEditBtn").onclick = function() {
+                    document.getElementById("editForm").style.display = "none";
+                };
 
-                            document.getElementById("deleteBtn").onclick = function() {
-                                if (confirm("هل أنت متأكد أنك تريد حذف الموعد؟")) {
-                                    window.location.href = "index.html";
-                                }
-                            };
-
-                            document.getElementById("addToCalendarBtn").onclick = function() {
-                                let eventDate = new Date(currentDate);
-                                let startTime = eventDate.toISOString().slice(0, 16);
-                                let calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentDetails)}&dates=${startTime}/${startTime}&details=${encodeURIComponent(currentDetails)}`;
-                                window.open(calendarUrl, "_blank");
-                            };
-                        } else {
-                            alert("لم يتم العثور على الموعد في ملف Excel.");
-                        }
-                    },
-                    error: function() {
-                        alert("فشل تحميل ملف المواعيد.");
+                // عند الضغط على زر حذف
+                document.getElementById("deleteBtn").onclick = function() {
+                    if (confirm("هل أنت متأكد أنك تريد حذف الموعد؟")) {
+                        // إغلاق الصفحة أو العودة للصفحة الرئيسية
+                        window.location.href = "index.html";
                     }
-                });
+                };
+
+                // إضافة الموعد إلى التقويم
+                document.getElementById("addToCalendarBtn").onclick = function() {
+                    let eventDate = new Date(currentDate);
+                    let startTime = eventDate.toISOString().slice(0, 16); // تنسيق: YYYY-MM-DDTHH:MM
+                    let calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentDetails)}&dates=${startTime}/${startTime}&details=${encodeURIComponent(currentDetails)}`;
+                    window.open(calendarUrl, "_blank");
+                };
             } else {
                 alert("لم يتم العثور على البيانات.");
             }
