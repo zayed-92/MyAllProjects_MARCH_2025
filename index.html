@@ -1,70 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📷 قارئ الباركود</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        video, canvas { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
-        button { margin-top: 10px; padding: 10px 20px; font-size: 18px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h2>📷 توجيه الكاميرا إلى الباركود لقراءته</h2>
-    <video id="video" autoplay playsinline></video>
-    <br>
-    <button onclick="startCamera()">📸 تشغيل الكاميرا الخلفية</button>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <p id="barcode-result">🔍 انتظر قراءة الباركود...</p>
-    
-    <script>
-        let video = document.getElementById('video');
-        let canvas = document.getElementById('canvas');
-        let context = canvas.getContext('2d');
-        let scanning = false;
-
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(function(stream) {
-                    video.srcObject = stream;
-                    video.setAttribute("playsinline", true);
-                    video.play();
-                    scanning = true;
-                    requestAnimationFrame(scanBarcode);
-                })
-                .catch(function(error) {
-                    alert("⚠️ لا يمكن فتح الكاميرا! تأكد من منح الإذن.");
-                    console.error("خطأ في تشغيل الكاميرا:", error);
-                });
-        }
-
-        function scanBarcode() {
-            if (!scanning) return;
-
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                let code = jsQR(imageData.data, canvas.width, canvas.height, {
-                    inversionAttempts: "dontInvert"
-                });
-
-                if (code) {
-                    document.getElementById('barcode-result').innerText = "✅ الباركود: " + code.data;
-                    setTimeout(() => { requestAnimationFrame(scanBarcode); }, 1000); // استمر في الفحص بعد 1 ثانية
-                } else {
-                    requestAnimationFrame(scanBarcode); // استمرار البحث عن باركود
-                }
-            } else {
-                requestAnimationFrame(scanBarcode);
-            }
-        }
-
-        // تشغيل الكاميرا تلقائيًا عند تحميل الصفحة
-        window.onload = startCamera;
-    </script>
-</body>
-</html>
