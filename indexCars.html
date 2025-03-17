@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle License Plate Detection</title>
+    <title>Read Vehicle License Plate</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,7 +11,7 @@
             background: #f4f4f4;
             padding: 20px;
         }
-        video, canvas {
+        video, canvas, img {
             width: 80%;
             max-width: 600px;
             border: 2px solid #3498db;
@@ -42,9 +42,10 @@
 </head>
 <body>
 
-    <h2>Capture and Detect Vehicle License Plate</h2>
-    <button onclick="startCamera()">Start Camera</button>
+    <h2>Capture and Read Vehicle License Plate</h2>
+    <button onclick="startCamera()">Start Rear Camera</button>
     <button onclick="captureImage()">Capture Image</button>
+    <button onclick="restartCamera()">Restart Camera</button>
     
     <br>
     <video id="video" autoplay playsinline></video>
@@ -55,22 +56,11 @@
     <h3>Extracted Text:</h3>
     <div id="result">Text not recognized yet</div>
 
-    <!-- Include OpenCV.js -->
-    <script async src="https://docs.opencv.org/master/opencv.js"></script>
-    <!-- Include Tesseract.js for OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <!-- Include Tesseract.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.0.2/tesseract.min.js"></script>
 
     <script>
         let videoStream = null;
-        let cap;
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        
-        // Wait for OpenCV.js to load
-        function onOpenCvReady() {
-            console.log("OpenCV.js is ready.");
-            cap = new cv.VideoCapture(document.getElementById('video'));
-        }
 
         function startCamera() {
             if (videoStream) {
@@ -84,9 +74,6 @@
                 let video = document.getElementById('video');
                 video.srcObject = stream;
                 videoStream = stream;
-
-                // Start video capture
-                cv.onRuntimeInitialized = onOpenCvReady;
             })
             .catch(function(error) {
                 alert("Error: Cannot start the camera. Please ensure permission is granted.");
@@ -94,80 +81,53 @@
             });
         }
 
-        // Preprocessing frame for detecting the license plate
-        function processFrame() {
-            // Capture current video frame
-            let frame = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-            cap.read(frame);
-
-            // Convert to grayscale
-            let gray = new cv.Mat();
-            cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-
-            // Apply Gaussian blur to reduce noise
-            cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
-
-            // Use Canny edge detection to highlight edges
-            let edges = new cv.Mat();
-            cv.Canny(gray, edges, 50, 150, 3, false);
-
-            // Find contours in the edge-detected image
-            let contours = new cv.MatVector();
-            let hierarchy = new cv.Mat();
-            cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-            // Iterate over contours and filter by shape (rectangle-like areas for plates)
-            for (let i = 0; i < contours.size(); i++) {
-                let contour = contours.get(i);
-                let rect = cv.boundingRect(contour);
-                let aspectRatio = rect.width / rect.height;
-
-                // Filter rectangles based on aspect ratio (license plates are typically rectangular)
-                if (aspectRatio > 2 && aspectRatio < 6) {
-                    // Draw a rectangle around the potential license plate
-                    cv.rectangle(frame, rect, [0, 255, 0, 255], 2);
-                }
-            }
-
-            // Show the processed frame with detected plate area
-            cv.imshow('canvas', frame);
-
-            // Release memory
-            frame.delete();
-            gray.delete();
-            edges.delete();
-            contours.delete();
-            hierarchy.delete();
-        }
-
         function captureImage() {
+            let video = document.getElementById('video');
+            let canvas = document.getElementById('canvas');
             let img = document.getElementById('capturedImage');
 
-            // Capture the current frame
-            processFrame();
+            if (!videoStream) {
+                alert("You must start the camera first!");
+                return;
+            }
 
-            // Get the canvas image data
-            let imageData = canvas.toDataURL('image/png');
-            img.src = imageData;
+            // Set canvas size to match video size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Capture image from video
+            let context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the captured image to a data URL and display it in <img>
+            img.src = canvas.toDataURL('image/png');
             img.style.display = "block";
 
-            // Optionally, perform OCR on the captured image to extract text
-            recognizeText(imageData);
+            // Stop the camera after capturing the image
+            stopCamera();
+
+            // Start text recognition from the captured image
+            recognizeText(img.src);
         }
 
         function recognizeText(imageData) {
             document.getElementById("result").innerText = "Recognizing text...";
 
-            // Use Tesseract.js for OCR
+            // Tesseract settings to only recognize English letters and numbers
             Tesseract.recognize(
                 imageData,
-                'eng',
+                'eng', // Recognize only English language
                 {
-                    logger: m => console.log(m)
+                    logger: m => console.log(m), // Show progress log
+                    tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', // Whitelist: Only numbers and English letters
+                    preserve_interword_spaces: true,
+                    fast: true // Optional: Optimize recognition speed
                 }
             ).then(({ data: { text } }) => {
-                // Display the recognized text
-                document.getElementById("result").innerText = "Extracted text:\n" + text;
+                // Display the extracted text
+                // Split the text by new lines and display each part in a new line
+                const formattedText = text.split("\n").join("\n");
+                document.getElementById("result").innerText = "Extracted text:\n" + formattedText;
             }).catch(error => {
                 document.getElementById("result").innerText = "Error recognizing text!";
                 console.error(error);
@@ -181,6 +141,10 @@
             }
         }
 
+        function restartCamera() {
+            stopCamera();
+            startCamera();
+        }
     </script>
 
 </body>
