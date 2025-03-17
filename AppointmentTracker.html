@@ -6,7 +6,6 @@
     <title>إدارة المواعيد</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.1/dist/xlsx.full.min.js"></script>
     <style>
         body { direction: rtl; text-align: right; background-color: #f8f9fa; }
         .container { max-width: 800px; margin-top: 20px; }
@@ -44,36 +43,29 @@
 
     <script>
         $(document).ready(function () {
-            // تحميل البيانات من ملف Excel
-            $.ajax({
-                url: 'appointments.xlsx', // الرابط المباشر للملف في GitHub
-                type: 'GET',
-                responseType: 'arraybuffer',
-                success: function(data) {
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+            // تحميل بيانات المواعيد من Google Sheets بتنسيق JSON
+            const sheetUrl = 'https://spreadsheets.google.com/feeds/list/2PACX-1vQXK13GM8iBXW3m9jgBOioPKNqPma8t510YNbjFn3A8kO0yKiVD_vZMZLLMtHmd5J4SCWnZ6IqyED7g/od6/public/values?alt=json';
 
-                    // إضافة المواعيد إلى الجدول
-                    jsonData.forEach(function(appointment) {
-                        let newRow = `<tr>
-                            <td>${appointment.date}</td>
-                            <td><span class="preview">${appointment.details.substring(0, 20)}...</span>
-                                <span class="hidden-details">${appointment.details}</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-info btn-sm view-details" data-date="${appointment.date}" data-details="${appointment.details}">عرض</button>
-                                <button class="btn btn-warning btn-sm edit" data-date="${appointment.date}" data-details="${appointment.details}">تعديل</button>
-                                <button class="btn btn-danger btn-sm delete">حذف</button>
-                                <button class="btn btn-success btn-sm add-to-calendar" data-date="${appointment.date}" data-details="${appointment.details}">إضافة إلى التقويم</button>
-                            </td>
-                        </tr>`;
-                        $("#appointmentsTable").append(newRow);
-                    });
-                },
-                error: function() {
-                    alert("فشل تحميل ملف المواعيد.");
-                }
+            // جلب البيانات
+            $.getJSON(sheetUrl, function(data) {
+                let appointments = data.feed.entry;
+                appointments.forEach(function(appointment) {
+                    let date = appointment.gsx$التاريخ.$t;
+                    let details = appointment.gsx$التفاصيل.$t;
+                    let newRow = `<tr>
+                        <td>${date}</td>
+                        <td><span class="preview">${details.substring(0, 20)}...</span>
+                            <span class="hidden-details">${details}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-info btn-sm view-details" data-date="${date}" data-details="${details}">عرض</button>
+                            <button class="btn btn-warning btn-sm edit" data-date="${date}" data-details="${details}">تعديل</button>
+                            <button class="btn btn-danger btn-sm delete">حذف</button>
+                            <button class="btn btn-success btn-sm add-to-calendar" data-date="${date}" data-details="${details}">إضافة إلى التقويم</button>
+                        </td>
+                    </tr>`;
+                    $("#appointmentsTable").append(newRow);
+                });
             });
 
             $("#appointmentForm").submit(function (event) {
@@ -127,7 +119,7 @@
                 let date = $(this).data("date");
                 let details = $(this).data("details");
                 let eventDate = new Date(date);
-                let startTime = eventDate.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+                let startTime = eventDate.toISOString().slice(0, 16); // تنسيق: YYYY-MM-DDTHH:MM
                 let calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(details)}&dates=${startTime}/${startTime}&details=${encodeURIComponent(details)}`;
                 window.open(calendarUrl, "_blank");
             });
