@@ -36,6 +36,7 @@
             color: #2c3e50;
             margin-top: 20px;
             font-weight: bold;
+            white-space: pre-wrap; /* Display the result with line breaks */
         }
     </style>
 </head>
@@ -124,7 +125,9 @@
                 }
             ).then(({ data: { text } }) => {
                 // Display the extracted text
-                document.getElementById("result").innerText = "Extracted text: " + text;
+                // Split the text by new lines and display each part in a new line
+                const formattedText = text.split("\n").join("\n");
+                document.getElementById("result").innerText = "Extracted text:\n" + formattedText;
             }).catch(error => {
                 document.getElementById("result").innerText = "Error recognizing text!";
                 console.error(error);
