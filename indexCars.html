@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Read Vehicle License Plate</title>
+    <title>Vehicle License Plate Detection</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,7 +42,7 @@
 </head>
 <body>
 
-    <h2>Capture and Read Vehicle License Plate</h2>
+    <h2>Capture and Detect Vehicle License Plate</h2>
     <button onclick="startCamera()">Start Rear Camera</button>
     <button onclick="captureImage()">Capture Image</button>
     <button onclick="restartCamera()">Restart Camera</button>
@@ -61,7 +61,9 @@
 
     <script>
         let videoStream = null;
-
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        
         function startCamera() {
             if (videoStream) {
                 stopCamera();
@@ -74,6 +76,7 @@
                 let video = document.getElementById('video');
                 video.srcObject = stream;
                 videoStream = stream;
+                detectLicensePlate(); // Start detecting plates as soon as the video starts
             })
             .catch(function(error) {
                 alert("Error: Cannot start the camera. Please ensure permission is granted.");
@@ -81,9 +84,30 @@
             });
         }
 
+        function detectLicensePlate() {
+            let video = document.getElementById('video');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Draw the current frame of the video to canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Detect rectangles (simulate plate detection)
+            context.beginPath();
+            context.lineWidth = 4;
+            context.strokeStyle = 'red';
+            
+            // Example of detecting a region and drawing a rectangle (This should be replaced with actual detection logic)
+            // This is a placeholder to demonstrate the concept
+            context.rect(100, 100, 400, 100); // (x, y, width, height) of rectangle (simulated plate detection)
+            context.stroke();
+
+            // Keep detecting every 100ms (simulating real-time detection)
+            requestAnimationFrame(detectLicensePlate);
+        }
+
         function captureImage() {
             let video = document.getElementById('video');
-            let canvas = document.getElementById('canvas');
             let img = document.getElementById('capturedImage');
 
             if (!videoStream) {
