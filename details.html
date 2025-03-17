@@ -43,7 +43,6 @@
     </div>
 
     <script>
-        // استخراج البيانات من الرابط
         function getQueryParameter(name) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(name);
@@ -54,83 +53,61 @@
             const details = getQueryParameter("details");
 
             if (date && details) {
-                // عرض التفاصيل في الصفحة
                 document.getElementById("date").textContent = date;
                 document.getElementById("details").textContent = details;
 
-                // تحميل البيانات من ملف Excel
-                const inputElement = document.createElement("input");
-                inputElement.type = "file";
-                inputElement.accept = ".xlsx";
-                inputElement.addEventListener("change", handleFileSelect);
-                inputElement.click();
-
-                // دالة لمعالجة الملف
-                function handleFileSelect(event) {
-                    const file = event.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const data = e.target.result;
-                        const workbook = XLSX.read(data, { type: 'binary' });
+                $.ajax({
+                    url: 'files/appointments.xlsx', // مسار الملف في المشروع
+                    type: 'GET',
+                    responseType: 'arraybuffer',
+                    success: function(data) {
+                        const workbook = XLSX.read(data, { type: 'array' });
                         const sheet = workbook.Sheets[workbook.SheetNames[0]];
                         const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-                        // البحث عن الموعد في البيانات
-                        const appointment = jsonData.find(appointment => appointment.date === date && appointment.details === details);
-                        
-                        if (appointment) {
-                            // عند العثور على الموعد
-                            document.getElementById("date").textContent = appointment.date;
-                            document.getElementById("details").textContent = appointment.details;
+                        const appointment = jsonData.find(function(appointment) {
+                            return appointment.date === date && appointment.details === details;
+                        });
 
-                            // تخزين البيانات المعدلة عند الحاجة
+                        if (appointment) {
                             let currentDate = appointment.date;
                             let currentDetails = appointment.details;
 
-                            // عند الضغط على زر تعديل
                             document.getElementById("editBtn").onclick = function() {
                                 document.getElementById("editForm").style.display = "block";
                                 document.getElementById("editDate").value = currentDate;
                                 document.getElementById("editDetails").value = currentDetails;
                             };
 
-                            // عند إرسال النموذج لتعديل الموعد
                             document.getElementById("editAppointmentForm").onsubmit = function(event) {
                                 event.preventDefault();
                                 currentDate = document.getElementById("editDate").value;
                                 currentDetails = document.getElementById("editDetails").value;
-
                                 document.getElementById("date").textContent = currentDate;
                                 document.getElementById("details").textContent = currentDetails;
                                 document.getElementById("editForm").style.display = "none";
                             };
 
-                            // عند الضغط على زر إلغاء التعديل
-                            document.getElementById("cancelEditBtn").onclick = function() {
-                                document.getElementById("editForm").style.display = "none";
-                            };
-
-                            // عند الضغط على زر حذف
                             document.getElementById("deleteBtn").onclick = function() {
                                 if (confirm("هل أنت متأكد أنك تريد حذف الموعد؟")) {
-                                    // إغلاق الصفحة أو العودة للصفحة الرئيسية
                                     window.location.href = "index.html";
                                 }
                             };
 
-                            // إضافة الموعد إلى التقويم
                             document.getElementById("addToCalendarBtn").onclick = function() {
                                 let eventDate = new Date(currentDate);
-                                let startTime = eventDate.toISOString().slice(0, 16); // تنسيق: YYYY-MM-DDTHH:MM
+                                let startTime = eventDate.toISOString().slice(0, 16);
                                 let calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentDetails)}&dates=${startTime}/${startTime}&details=${encodeURIComponent(currentDetails)}`;
                                 window.open(calendarUrl, "_blank");
                             };
                         } else {
                             alert("لم يتم العثور على الموعد في ملف Excel.");
                         }
-                    };
-                    reader.readAsBinaryString(file);
-                }
+                    },
+                    error: function() {
+                        alert("فشل تحميل ملف المواعيد.");
+                    }
+                });
             } else {
                 alert("لم يتم العثور على البيانات.");
             }
