@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قراءة لوحة السيارة</title>
+    <title>Read Vehicle License Plate</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,10 +41,10 @@
 </head>
 <body>
 
-    <h2>التقاط صورة وقراءة أرقام وحروف لوحة السيارة</h2>
-    <button onclick="startCamera()">تشغيل الكاميرا الخلفية</button>
-    <button onclick="captureImage()">التقاط الصورة</button>
-    <button onclick="restartCamera()">إعادة تشغيل الكاميرا</button>
+    <h2>Capture and Read Vehicle License Plate</h2>
+    <button onclick="startCamera()">Start Rear Camera</button>
+    <button onclick="captureImage()">Capture Image</button>
+    <button onclick="restartCamera()">Restart Camera</button>
     
     <br>
     <video id="video" autoplay playsinline></video>
@@ -52,10 +52,10 @@
     <br>
     <img id="capturedImage" style="display:none; width: 80%; max-width: 600px; margin-top: 20px;">
     
-    <h3>النص المستخرج من الصورة:</h3>
-    <div id="result">لم يتم التعرف على النص بعد</div>
+    <h3>Extracted Text:</h3>
+    <div id="result">Text not recognized yet</div>
 
-    <!-- تضمين مكتبة Tesseract.js -->
+    <!-- Include Tesseract.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.0.2/tesseract.min.js"></script>
 
     <script>
@@ -67,7 +67,7 @@
             }
 
             navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: { exact: "environment" } } // تشغيل الكاميرا الخلفية
+                video: { facingMode: { exact: "environment" } } // Use rear camera
             })
             .then(function(stream) {
                 let video = document.getElementById('video');
@@ -75,7 +75,7 @@
                 videoStream = stream;
             })
             .catch(function(error) {
-                alert("حدث خطأ: لا يمكن تشغيل الكاميرا. تأكد من إعطاء الإذن.");
+                alert("Error: Cannot start the camera. Please ensure permission is granted.");
                 console.error(error);
             });
         }
@@ -86,47 +86,47 @@
             let img = document.getElementById('capturedImage');
 
             if (!videoStream) {
-                alert("يجب تشغيل الكاميرا أولاً!");
+                alert("You must start the camera first!");
                 return;
             }
 
-            // ضبط حجم الـ Canvas ليكون بنفس حجم الفيديو
+            // Set canvas size to match video size
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            // التقاط الصورة من الفيديو
+            // Capture image from video
             let context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // تحويل الصورة إلى بيانات URL وعرضها في <img>
+            // Convert the captured image to a data URL and display it in <img>
             img.src = canvas.toDataURL('image/png');
             img.style.display = "block";
 
-            // إيقاف تشغيل الكاميرا بعد التقاط الصورة
+            // Stop the camera after capturing the image
             stopCamera();
 
-            // بدء عملية التعرف على النصوص من الصورة
+            // Start text recognition from the captured image
             recognizeText(img.src);
         }
 
         function recognizeText(imageData) {
-            document.getElementById("result").innerText = "جارٍ التعرف على النص...";
+            document.getElementById("result").innerText = "Recognizing text...";
 
-            // تحسين النصوص بشكل أفضل باستخدام إعدادات Tesseract المتقدمة
+            // Tesseract settings to only recognize English letters and numbers
             Tesseract.recognize(
                 imageData,
-                'eng+ara', // التعرف على اللغات العربية والإنجليزية
+                'eng', // Recognize only English language
                 {
-                    logger: m => console.log(m), // عرض التقدم في التعرف على النصوص
-                    tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', // السماح فقط بالأرقام والحروف
+                    logger: m => console.log(m), // Show progress log
+                    tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', // Whitelist: Only numbers and English letters
                     preserve_interword_spaces: true,
-                    fast: true // يمكن تحسين الأداء عبر إضافة إعدادات أخرى مثل هذا
+                    fast: true // Optional: Optimize recognition speed
                 }
             ).then(({ data: { text } }) => {
-                // عرض النص المستخرج
-                document.getElementById("result").innerText = "النص المستخرج: " + text;
+                // Display the extracted text
+                document.getElementById("result").innerText = "Extracted text: " + text;
             }).catch(error => {
-                document.getElementById("result").innerText = "حدث خطأ في التعرف على النص!";
+                document.getElementById("result").innerText = "Error recognizing text!";
                 console.error(error);
             });
         }
