@@ -45,19 +45,12 @@
     <script>
         $(document).ready(function () {
             // تحميل البيانات من ملف Excel
-            const inputElement = document.createElement("input");
-            inputElement.type = "file";
-            inputElement.accept = ".xlsx";
-            inputElement.addEventListener("change", handleFileSelect);
-            inputElement.click();
-
-            // دالة لمعالجة الملف
-            function handleFileSelect(event) {
-                const file = event.target.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const data = e.target.result;
-                    const workbook = XLSX.read(data, { type: 'binary' });
+            $.ajax({
+                url: 'files/appointments.xlsx', // مسار الملف في المشروع
+                type: 'GET',
+                responseType: 'arraybuffer',
+                success: function(data) {
+                    const workbook = XLSX.read(data, { type: 'array' });
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(sheet);
 
@@ -77,9 +70,11 @@
                         </tr>`;
                         $("#appointmentsTable").append(newRow);
                     });
-                };
-                reader.readAsBinaryString(file);
-            }
+                },
+                error: function() {
+                    alert("فشل تحميل ملف المواعيد.");
+                }
+            });
 
             $("#appointmentForm").submit(function (event) {
                 event.preventDefault();
