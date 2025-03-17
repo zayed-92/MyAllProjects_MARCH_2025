@@ -57,7 +57,7 @@
                 document.getElementById("details").textContent = details;
 
                 $.ajax({
-                    url: 'https://raw.githubusercontent.com/zayed-92/testPython/main/appointments.xlsx', // مسار الملف في المشروع
+                    url: 'appointments.xlsx', // مسار الملف في المشروع
                     type: 'GET',
                     responseType: 'arraybuffer',
                     success: function(data) {
