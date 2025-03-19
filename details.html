@@ -40,69 +40,27 @@
             </form>
         </div>
     </div>
-
     <script>
-        // استخراج البيانات من الرابط
-        function getQueryParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
+    const scriptURL = "https://script.google.com/macros/s/AKfycbz9iHkVOujzgVKow_sGwkkYe73pRmb36J1zbWEzWY9v3qqFae3NjXWTLld7WWWPr7SA/exec";
 
-        window.onload = function() {
-            const date = getQueryParameter("date");
-            const details = getQueryParameter("details");
+    function getQueryParameter(name) {
+        return new URLSearchParams(window.location.search).get(name);
+    }
 
-            if (date && details) {
-                // عرض التفاصيل في الصفحة
-                document.getElementById("date").textContent = date;
-                document.getElementById("details").textContent = details;
+    $(document).ready(function () {
+        let date = getQueryParameter("date");
 
-                // تخزين البيانات المعدلة عند الحاجة
-                let currentDate = date;
-                let currentDetails = details;
-
-                // عند الضغط على زر تعديل
-                document.getElementById("editBtn").onclick = function() {
-                    document.getElementById("editForm").style.display = "block";
-                    document.getElementById("editDate").value = currentDate;
-                    document.getElementById("editDetails").value = currentDetails;
-                };
-
-                // عند إرسال النموذج لتعديل الموعد
-                document.getElementById("editAppointmentForm").onsubmit = function(event) {
-                    event.preventDefault();
-                    currentDate = document.getElementById("editDate").value;
-                    currentDetails = document.getElementById("editDetails").value;
-
-                    document.getElementById("date").textContent = currentDate;
-                    document.getElementById("details").textContent = currentDetails;
-                    document.getElementById("editForm").style.display = "none";
-                };
-
-                // عند الضغط على زر إلغاء التعديل
-                document.getElementById("cancelEditBtn").onclick = function() {
-                    document.getElementById("editForm").style.display = "none";
-                };
-
-                // عند الضغط على زر حذف
-                document.getElementById("deleteBtn").onclick = function() {
-                    if (confirm("هل أنت متأكد أنك تريد حذف الموعد؟")) {
-                        // إغلاق الصفحة أو العودة للصفحة الرئيسية
-                        window.location.href = "index.html";
-                    }
-                };
-
-                // إضافة الموعد إلى التقويم
-                document.getElementById("addToCalendarBtn").onclick = function() {
-                    let eventDate = new Date(currentDate);
-                    let startTime = eventDate.toISOString().slice(0, 16); // تنسيق: YYYY-MM-DDTHH:MM
-                    let calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentDetails)}&dates=${startTime}/${startTime}&details=${encodeURIComponent(currentDetails)}`;
-                    window.open(calendarUrl, "_blank");
-                };
+        $.getJSON(scriptURL, function (data) {
+            let appointment = data.find(app => app.date === date);
+            if (appointment) {
+                $("#date").text(appointment.date);
+                $("#details").text(appointment.details);
             } else {
-                alert("لم يتم العثور على البيانات.");
+                alert("لم يتم العثور على الموعد.");
             }
-        };
-    </script>
+        });
+    });
+</script>
+
 </body>
 </html>
