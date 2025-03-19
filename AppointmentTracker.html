@@ -40,90 +40,40 @@
             </tbody>
         </table>
     </div>
-
     <script>
-        $(document).ready(function () {
-            // تحميل بيانات المواعيد من Google Sheets بتنسيق JSON
-            const sheetUrl = 'https://spreadsheets.google.com/feeds/list/2PACX-1vQXK13GM8iBXW3m9jgBOioPKNqPma8t510YNbjFn3A8kO0yKiVD_vZMZLLMtHmd5J4SCWnZ6IqyED7g/od6/public/values?alt=json';
+    const scriptURL = "https://script.google.com/macros/s/AKfycbz9iHkVOujzgVKow_sGwkkYe73pRmb36J1zbWEzWY9v3qqFae3NjXWTLld7WWWPr7SA/exec";
 
-            // جلب البيانات
-            $.getJSON(sheetUrl, function(data) {
-                let appointments = data.feed.entry;
-                appointments.forEach(function(appointment) {
-                    let date = appointment.gsx$التاريخ.$t;
-                    let details = appointment.gsx$التفاصيل.$t;
+    $(document).ready(function () {
+        function fetchAppointments() {
+            $.getJSON(scriptURL, function (data) {
+                $("#appointmentsTable").empty();
+                data.forEach(appointment => {
                     let newRow = `<tr>
-                        <td>${date}</td>
-                        <td><span class="preview">${details.substring(0, 20)}...</span>
-                            <span class="hidden-details">${details}</span>
-                        </td>
+                        <td>${appointment.date}</td>
+                        <td>${appointment.details.substring(0, 20)}...</td>
                         <td>
-                            <button class="btn btn-info btn-sm view-details" data-date="${date}" data-details="${details}">عرض</button>
-                            <button class="btn btn-warning btn-sm edit" data-date="${date}" data-details="${details}">تعديل</button>
-                            <button class="btn btn-danger btn-sm delete">حذف</button>
-                            <button class="btn btn-success btn-sm add-to-calendar" data-date="${date}" data-details="${details}">إضافة إلى التقويم</button>
+                            <button class="btn btn-info btn-sm view-details" data-date="${appointment.date}" data-details="${appointment.details}">عرض</button>
                         </td>
                     </tr>`;
                     $("#appointmentsTable").append(newRow);
                 });
             });
+        }
 
-            $("#appointmentForm").submit(function (event) {
-                event.preventDefault();
-                let date = $("#date").val();
-                let details = $("#details").val();
-                let newRow = `<tr>
-                    <td>${date}</td>
-                    <td><span class="preview">${details.substring(0, 20)}...</span>
-                        <span class="hidden-details">${details}</span>
-                    </td>
-                    <td>
-                        <button class="btn btn-info btn-sm view-details" data-date="${date}" data-details="${details}">عرض</button>
-                        <button class="btn btn-warning btn-sm edit" data-date="${date}" data-details="${details}">تعديل</button>
-                        <button class="btn btn-danger btn-sm delete">حذف</button>
-                        <button class="btn btn-success btn-sm add-to-calendar" data-date="${date}" data-details="${details}">إضافة إلى التقويم</button>
-                    </td>
-                </tr>`;
-                $("#appointmentsTable").append(newRow);
+        $("#appointmentForm").submit(function (event) {
+            event.preventDefault();
+            let date = $("#date").val();
+            let details = $("#details").val();
+
+            $.post(scriptURL, JSON.stringify({ date: date, details: details }), function () {
+                fetchAppointments();
                 $("#appointmentForm")[0].reset();
-            });
-
-            $(document).on("click", ".view-details", function () {
-                let date = $(this).data("date");
-                let details = $(this).data("details");
-                let url = `details.html?date=${encodeURIComponent(date)}&details=${encodeURIComponent(details)}`;
-                window.open(url, "_blank");
-            });
-
-            $(document).on("click", ".delete", function () {
-                $(this).closest("tr").remove();
-            });
-
-            $(document).on("click", ".edit", function () {
-                let date = $(this).data("date");
-                let details = $(this).data("details");
-                $("#date").val(date);
-                $("#details").val(details);
-                $("#appointmentForm").submit(function (event) {
-                    event.preventDefault();
-                    $(this).closest("tr").find("td:eq(0)").text($("#date").val());
-                    $(this).closest("tr").find("td:eq(1)").html(`<span class="preview">${$("#details").val().substring(0, 20)}...</span><span class="hidden-details">${$("#details").val()}</span>`);
-                    $(this).closest("tr").find(".view-details").data("date", $("#date").val()).data("details", $("#details").val());
-                    $(this).closest("tr").find(".edit").data("date", $("#date").val()).data("details", $("#details").val());
-                    $(this).closest("tr").find(".add-to-calendar").data("date", $("#date").val()).data("details", $("#details").val());
-                    $(this)[0].reset();
-                });
-            });
-
-            $(document).on("click", ".add-to-calendar", function () {
-                let date = $(this).data("date");
-                let details = $(this).data("details");
-                let eventDate = new Date(date);
-                let startTime = eventDate.toISOString().slice(0, 16); // تنسيق: YYYY-MM-DDTHH:MM
-                let calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(details)}&dates=${startTime}/${startTime}&details=${encodeURIComponent(details)}`;
-                window.open(calendarUrl, "_blank");
-            });
+            }, "json");
         });
-    </script>
+
+        fetchAppointments();
+    });
+</script>
+
 </body>
 </html>
