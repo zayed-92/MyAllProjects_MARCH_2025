@@ -41,38 +41,66 @@
         </table>
     </div>
     <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbz9iHkVOujzgVKow_sGwkkYe73pRmb36J1zbWEzWY9v3qqFae3NjXWTLld7WWWPr7SA/exec";
+    // رابط Google Apps Script
+const API_URL = "https://script.google.com/macros/s/AKfycbyH5IEYDPdXWzKJZ7r1qoJwobrhDLo4u4eUgpnWg1DztKvtRo0GhXZNO0V72-klZGOv/exec";
 
-    $(document).ready(function () {
-        function fetchAppointments() {
-            $.getJSON(scriptURL, function (data) {
-                $("#appointmentsTable").empty();
-                data.forEach(appointment => {
-                    let newRow = `<tr>
-                        <td>${appointment.date}</td>
-                        <td>${appointment.details.substring(0, 20)}...</td>
-                        <td>
-                            <button class="btn btn-info btn-sm view-details" data-date="${appointment.date}" data-details="${appointment.details}">عرض</button>
-                        </td>
-                    </tr>`;
-                    $("#appointmentsTable").append(newRow);
-                });
-            });
-        }
+// تحميل المواعيد عند فتح الصفحة
+$(document).ready(function() {
+    fetchAppointments();
+});
 
-        $("#appointmentForm").submit(function (event) {
-            event.preventDefault();
-            let date = $("#date").val();
-            let details = $("#details").val();
-
-            $.post(scriptURL, JSON.stringify({ date: date, details: details }), function () {
-                fetchAppointments();
-                $("#appointmentForm")[0].reset();
-            }, "json");
+// استدعاء المواعيد من Google Sheets
+function fetchAppointments() {
+    $.get(API_URL, function(response) {
+        let appointments = response.data;
+        let tableBody = "";
+        appointments.forEach((appointment, index) => {
+            tableBody += `<tr>
+                            <td>${appointment.date}</td>
+                            <td>${appointment.details}</td>
+                            <td>
+                                <button class='btn btn-info' onclick='viewDetails(${index})'>عرض</button>
+                                <button class='btn btn-warning' onclick='editAppointment(${index})'>تعديل</button>
+                                <button class='btn btn-danger' onclick='deleteAppointment(${index})'>حذف</button>
+                            </td>
+                          </tr>`;
         });
+        $("#appointmentsTable tbody").html(tableBody);
+    });
+}
 
+// إضافة موعد جديد
+$("#addAppointmentForm").submit(function(event) {
+    event.preventDefault();
+    let formData = {
+        date: $("#appointmentDate").val(),
+        details: $("#appointmentDetails").val()
+    };
+    $.post(API_URL, formData, function(response) {
+        alert("تمت إضافة الموعد بنجاح");
         fetchAppointments();
     });
+});
+
+// حذف موعد
+function deleteAppointment(index) {
+    if (confirm("هل أنت متأكد أنك تريد حذف الموعد؟")) {
+        $.ajax({
+            url: API_URL,
+            type: "DELETE",
+            data: { index: index },
+            success: function(response) {
+                alert("تم حذف الموعد بنجاح");
+                fetchAppointments();
+            }
+        });
+    }
+}
+
+// عرض التفاصيل
+function viewDetails(index) {
+    window.location.href = `details.html?index=${index}`;
+}
 </script>
 
 </body>
