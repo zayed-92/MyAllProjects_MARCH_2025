@@ -20,7 +20,7 @@
     }
 
     .container {
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
       background: #fff;
       padding: 20px;
@@ -39,7 +39,9 @@
       color: #555;
     }
 
-    .form-group input {
+    .form-group input,
+    textarea,
+    select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -65,6 +67,25 @@
 
     button:hover {
       background-color: #218838;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .actions button {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .actions button.edit {
+      background-color: #28a745;
+      color: white;
+    }
+    .actions button.delete {
+      background-color: #dc3545;
+      color: white;
     }
 
     table {
@@ -104,6 +125,7 @@
   <div class="container">
     <!-- نموذج إضافة موعد -->
     <form id="myForm">
+      <input type="hidden" id="id" name="id" />
       <div class="form-group">
         <label for="name">الاسم</label>
         <input type="text" id="name" name="name" placeholder="أدخل الاسم" required />
@@ -143,6 +165,7 @@
           <th>تاريخ التسجيل</th>
           <th>تاريخ الموعد</th>
           <th>التفاصيل</th>
+          <th>الإجراء</th>
         </tr>
       </thead>
       <tbody id="dataBody"></tbody>
@@ -154,7 +177,7 @@
     async function loadData() {
       try {
         const response = await fetch(
-          "https://script.google.com/macros/s/AKfycbx153uf0vsLmQQApFFs3Rn8G9oQozHy9rEzRR6YyFahU38lhXsY4QeyqsVmKo4-NcQS/exec"
+          "https://script.google.com/macros/s/AKfycbzdj2MrjI-0VP00-A50IZaKw3OFbqfApDcnybKNMyCrwg5bY8gQ0qs-E5FZJLM8RCLa/exec"
         );
         const data = await response.json();
         const tbody = document.getElementById("dataBody");
@@ -171,6 +194,10 @@
               <td>${formatDate(row[4]) || "غير معروف"}</td> <!-- تاريخ التسجيل -->
               <td>${formatDate(row[5]) || "غير معروف"}</td> <!-- تاريخ الموعد -->
               <td>${row[6] || "غير معروف"}</td> <!-- التفاصيل -->
+              <td class="actions">
+                <button class="edit" onclick="editRow('${row[0]}')">تعديل</button>
+                <button class="delete" onclick="deleteRow('${row[0]}')">حذف</button>
+              </td>
             </tr>
           `;
         });
@@ -179,10 +206,13 @@
       }
     }
 
-    // دالة لإرسال البيانات
+    // دالة لإرسال البيانات (إضافة / تعديل)
     async function submitForm() {
       const form = document.getElementById("myForm");
+      const action = form.id.value ? "edit" : "add"; // تحديد الإجراء (تعديل أو إضافة)
       const data = {
+        action: action,
+        id: form.id.value, // الكود الفريد (للتعديل)
         name: form.name.value,   // الاسم
         gender: form.gender.value, // الجنس
         phone: form.phone.value, // رقم الجوال
@@ -198,7 +228,7 @@
 
       try {
         const response = await fetch(
-          "https://script.google.com/macros/s/AKfycbx153uf0vsLmQQApFFs3Rn8G9oQozHy9rEzRR6YyFahU38lhXsY4QeyqsVmKo4-NcQS/exec",
+          "https://script.google.com/macros/s/AKfycbzdj2MrjI-0VP00-A50IZaKw3OFbqfApDcnybKNMyCrwg5bY8gQ0qs-E5FZJLM8RCLa/exec",
           {
             method: "POST",
             body: new URLSearchParams(data),
@@ -213,6 +243,55 @@
       }
     }
 
+    // دالة لتعديل الصف
+    function editRow(id) {
+      // البحث عن الصف الذي يحتوي على الكود الفريد
+      const rows = document.querySelectorAll("#dataBody tr");
+      let targetRow = null;
+
+      rows.forEach((row) => {
+        const rowId = row.cells[0].textContent; // الكود الفريد في العمود الأول
+        if (rowId === id) {
+          targetRow = row; // حفظ الصف المطلوب
+        }
+      });
+
+      // إذا لم يتم العثور على الصف
+      if (!targetRow) {
+        alert("لم يتم العثور على الصف المطلوب!");
+        return;
+      }
+
+      // تعبئة النموذج بالبيانات الحالية
+      const cells = targetRow.cells;
+      document.getElementById("id").value = id;
+      document.getElementById("name").value = cells[1].textContent;
+      document.getElementById("gender").value = cells[2].textContent;
+      document.getElementById("phone").value = cells[3].textContent;
+      document.getElementById("adate").value = formatDateForInput(cells[5].textContent);
+      document.getElementById("details").value = cells[6].textContent;
+    }
+
+    // دالة لحذف الصف
+    async function deleteRow(id) {
+      if (!confirm("هل أنت متأكد من حذف هذا الصف؟")) return;
+
+      try {
+        const response = await fetch(
+          "https://script.google.com/macros/s/AKfycbzdj2MrjI-0VP00-A50IZaKw3OFbqfApDcnybKNMyCrwg5bY8gQ0qs-E5FZJLM8RCLa/exec",
+          {
+            method: "POST",
+            body: new URLSearchParams({ action: "delete", id: id }),
+          }
+        );
+        const result = await response.text();
+        alert(result); // "تم الحذف بنجاح ✅"
+        loadData(); // إعادة تحميل البيانات
+      } catch (error) {
+        alert("حدث خطأ في الحذف!");
+      }
+    }
+
     // دالة مساعدة لتنسيق التاريخ
     function formatDate(dateValue) {
       if (!dateValue) return ""; // تجاهل القيم الفارغة
@@ -223,6 +302,16 @@
       return `${day}/${month}/${year}`; // النتيجة: 22/03/2025
     }
 
+    // دالة مساعدة لتنسيق التاريخ للإدخال
+    function formatDateForInput(dateValue) {
+      if (!dateValue) return ""; // تجاهل القيم الفارغة
+      const date = new Date(dateValue);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`; // النتيجة: 2025-03-22
+    }
+
     // تحميل البيانات عند فتح الصفحة
     loadData();
   </script>
@@ -230,28 +319,68 @@
 
 </html>
 
-
 <!-- // دالة لمعالجة طلبات POST
 function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 
-  // توليد الرقم الفريد
-  const uniqueId = generateUniqueId();
+  // التحقق من نوع الطلب (إضافة / تعديل / حذف)
+  const action = e.parameter.action;
 
-  // البيانات المرسلة من HTML
-  const { name, gender, phone, adate, details } = e.parameter; // استخراج البيانات باستخدام Destructuring
-  const autoDate = new Date().toISOString(); // تاريخ التسجيل التلقائي
+  if (action === "add") {
+    // توليد الرقم الفريد
+    const uniqueId = generateUniqueId();
 
-  // التحقق من وجود البيانات المطلوبة
-  if (!name || !gender || !phone || !adate || !details) {
-    return ContentService.createTextOutput("خطأ: البيانات المطلوبة غير مكتملة!");
+    // البيانات المرسلة من HTML
+    const { name, gender, phone, adate, details } = e.parameter; // استخراج البيانات باستخدام Destructuring
+    const autoDate = new Date().toISOString(); // تاريخ التسجيل التلقائي
+
+    // التحقق من وجود البيانات المطلوبة
+    if (!name || !gender || !phone || !adate || !details) {
+      return ContentService.createTextOutput("خطأ: البيانات المطلوبة غير مكتملة!");
+    }
+
+    // إضافة البيانات إلى الصف الجديد
+    sheet.appendRow([uniqueId, name, gender, phone, autoDate, adate, details]);
+
+    // إرجاع رسالة نجاح
+    return ContentService.createTextOutput("تم الحفظ بنجاح ✅");
+  } else if (action === "edit") {
+    // البيانات المرسلة من HTML
+    const { id, name, gender, phone, adate, details } = e.parameter;
+
+    // البحث عن الصف المراد تعديله
+    const data = sheet.getDataRange().getValues();
+    const rowIndex = data.findIndex(row => row[0] == id);
+
+    if (rowIndex === -1) {
+      return ContentService.createTextOutput("خطأ: الصف غير موجود!");
+    }
+
+    // تحديث البيانات
+    sheet.getRange(rowIndex + 1, 2, 1, 6).setValues([[name, gender, phone, new Date().toISOString(), adate, details]]);
+
+    // إرجاع رسالة نجاح
+    return ContentService.createTextOutput("تم التعديل بنجاح ✅");
+  } else if (action === "delete") {
+    // البيانات المرسلة من HTML
+    const { id } = e.parameter;
+
+    // البحث عن الصف المراد حذفه
+    const data = sheet.getDataRange().getValues();
+    const rowIndex = data.findIndex(row => row[0] == id);
+
+    if (rowIndex === -1) {
+      return ContentService.createTextOutput("خطأ: الصف غير موجود!");
+    }
+
+    // حذف الصف
+    sheet.deleteRow(rowIndex + 1);
+
+    // إرجاع رسالة نجاح
+    return ContentService.createTextOutput("تم الحذف بنجاح ✅");
+  } else {
+    return ContentService.createTextOutput("خطأ: طلب غير معروف!");
   }
-
-  // إضافة البيانات إلى الصف الجديد
-  sheet.appendRow([uniqueId, name, gender, phone, autoDate, adate, details]);
-
-  // إرجاع رسالة نجاح
-  return ContentService.createTextOutput("تم الحفظ بنجاح ✅");
 }
 
 // دالة لمعالجة طلبات GET (لحصول على البيانات)
