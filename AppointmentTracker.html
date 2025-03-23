@@ -1,74 +1,274 @@
 <!DOCTYPE html>
-<html lang="ar">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>إضافة موعد</title>
-    <link
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@7.12.15/dist/sweetalert2.all.min.js"></script>
-    <style>
-      .form-container {
-        max-width: 400px;
-        margin: auto;
-        margin-top: 50px;
-        padding: 20px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        background-color: #fff;
-        border-radius: 10px;
-      }
-    </style>
-  </head>
-  <body class="bg-light">
-    <div class="container">
-      <div class="form-container">
-        <h4 class="text-center mb-4">إضافة موعد</h4>
-        <form id="appointment-form">
-          <div class="form-group">
-            <label for="date">تاريخ الموعد:</label>
-            <input
-              class="form-control"
-              type="date"
-              name="التاريخ"
-              id="date"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="details">التفاصيل:</label>
-            <textarea
-              class="form-control"
-              name="التفاصيل"
-              id="details"
-              placeholder="أدخل التفاصيل هنا..."
-              required
-            ></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">إضافة</button>
-        </form>
-      </div>
-    </div>
+<html lang="ar" dir="rtl">
 
-    <script>
-      const scriptURL ="https://script.google.com/macros/s/AKfycbwzxFBrqDfg8dN7EzgpcBNQkqtzzW7xRCq8wL_XXxMvDwPzn5Ln9ZgZYx22ssNF8V2M7w/exec";
-      const form = document.getElementById("appointment-form");
-      
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        var formData = new FormData(form);
-        
-        fetch(scriptURL, { method: "POST", body: formData })
-          .then((response) => {
-            swal("تمت الإضافة!", "تم حفظ الموعد بنجاح.", "success");
-            form.reset();
-          })
-          .catch((error) => {
-            swal("خطأ!", "حدث خطأ أثناء حفظ الموعد، حاول مرة أخرى.", "error");
-          });
-      });
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إدارة المواعيد</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    .form-group input:focus {
+      border-color: #28a745;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      color: #333;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>إدارة المواعيد</h1>
+
+  <div class="container">
+    <!-- نموذج إضافة موعد -->
+    <form id="myForm">
+      <div class="form-group">
+        <label for="name">الاسم</label>
+        <input type="text" id="name" name="name" placeholder="أدخل الاسم" required />
+      </div>
+      <div class="form-group">
+        <label for="gender">الجنس</label>
+        <select id="gender" name="gender" required>
+          <option value="ذكر">ذكر</option>
+          <option value="أنثى">أنثى</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="phone">رقم الجوال</label>
+        <input type="text" id="phone" name="phone" placeholder="أدخل رقم الجوال" required />
+      </div>
+      <div class="form-group">
+        <label for="adate">تاريخ الموعد</label>
+        <input type="date" id="adate" name="adate" required />
+      </div>
+      <div class="form-group">
+        <label for="details">التفاصيل</label>
+        <textarea id="details" name="details" placeholder="أدخل التفاصيل" required></textarea>
+      </div>
+      <button type="button" onclick="submitForm()">إرسال</button>
+    </form>
+  </div>
+
+  <!-- جدول عرض البيانات -->
+  <div class="container">
+    <table border="1">
+      <thead>
+        <tr>
+          <th>الكود الفريد</th>
+          <th>الاسم</th>
+          <th>الجنس</th>
+          <th>رقم الجوال</th>
+          <th>تاريخ التسجيل</th>
+          <th>تاريخ الموعد</th>
+          <th>التفاصيل</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // دالة لتحميل البيانات عند فتح الصفحة
+    async function loadData() {
+      try {
+        const response = await fetch(
+          "https://script.google.com/macros/s/AKfycbx153uf0vsLmQQApFFs3Rn8G9oQozHy9rEzRR6YyFahU38lhXsY4QeyqsVmKo4-NcQS/exec"
+        );
+        const data = await response.json();
+        const tbody = document.getElementById("dataBody");
+        tbody.innerHTML = "";
+
+        // تجاهل الصف الأول (العناوين) وعرض البيانات
+        data.slice(1).forEach((row) => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${row[0] || "غير معروف"}</td> <!-- الكود الفريد -->
+              <td>${row[1] || "غير معروف"}</td> <!-- الاسم -->
+              <td>${row[2] || "غير معروف"}</td> <!-- الجنس -->
+              <td>${row[3] || "غير معروف"}</td> <!-- رقم الجوال -->
+              <td>${formatDate(row[4]) || "غير معروف"}</td> <!-- تاريخ التسجيل -->
+              <td>${formatDate(row[5]) || "غير معروف"}</td> <!-- تاريخ الموعد -->
+              <td>${row[6] || "غير معروف"}</td> <!-- التفاصيل -->
+            </tr>
+          `;
+        });
+      } catch (error) {
+        console.error("خطأ في جلب البيانات:", error);
+      }
+    }
+
+    // دالة لإرسال البيانات
+    async function submitForm() {
+      const form = document.getElementById("myForm");
+      const data = {
+        name: form.name.value,   // الاسم
+        gender: form.gender.value, // الجنس
+        phone: form.phone.value, // رقم الجوال
+        adate: form.adate.value, // تاريخ الموعد
+        details: form.details.value, // التفاصيل
+      };
+
+      // التحقق من إدخال البيانات
+      if (!data.name || !data.gender || !data.phone || !data.adate || !data.details) {
+        alert("الرجاء ملء جميع الحقول!");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          "https://script.google.com/macros/s/AKfycbx153uf0vsLmQQApFFs3Rn8G9oQozHy9rEzRR6YyFahU38lhXsY4QeyqsVmKo4-NcQS/exec",
+          {
+            method: "POST",
+            body: new URLSearchParams(data),
+          }
+        );
+        const result = await response.text();
+        alert(result); // "تم الحفظ بنجاح ✅"
+        form.reset(); // إعادة تعيين النموذج
+        loadData(); // إعادة تحميل البيانات
+      } catch (error) {
+        alert("حدث خطأ في الإرسال!");
+      }
+    }
+
+    // دالة مساعدة لتنسيق التاريخ
+    function formatDate(dateValue) {
+      if (!dateValue) return ""; // تجاهل القيم الفارغة
+      const date = new Date(dateValue);
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`; // النتيجة: 22/03/2025
+    }
+
+    // تحميل البيانات عند فتح الصفحة
+    loadData();
+  </script>
+</body>
+
 </html>
+
+
+<!-- // دالة لمعالجة طلبات POST
+function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+  // توليد الرقم الفريد
+  const uniqueId = generateUniqueId();
+
+  // البيانات المرسلة من HTML
+  const { name, gender, phone, adate, details } = e.parameter; // استخراج البيانات باستخدام Destructuring
+  const autoDate = new Date().toISOString(); // تاريخ التسجيل التلقائي
+
+  // التحقق من وجود البيانات المطلوبة
+  if (!name || !gender || !phone || !adate || !details) {
+    return ContentService.createTextOutput("خطأ: البيانات المطلوبة غير مكتملة!");
+  }
+
+  // إضافة البيانات إلى الصف الجديد
+  sheet.appendRow([uniqueId, name, gender, phone, autoDate, adate, details]);
+
+  // إرجاع رسالة نجاح
+  return ContentService.createTextOutput("تم الحفظ بنجاح ✅");
+}
+
+// دالة لمعالجة طلبات GET (لحصول على البيانات)
+function doGet(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = sheet.getDataRange().getValues();
+
+  // إرجاع البيانات كـ JSON
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// دالة لتوليد رقم فريد
+function generateUniqueId() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const lastId = scriptProperties.getProperty('lastId') || 0; // الحصول على الرقم الأخير
+  const newId = parseInt(lastId) + 1; // زيادة الرقم بمقدار 1
+  scriptProperties.setProperty('lastId', newId); // حفظ الرقم الجديد
+  return newId; // إرجاع الرقم الفريد
+} -->
