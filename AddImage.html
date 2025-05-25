@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>إدراج صورة في مستند Google - محلي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        h2 {
+            color: #1967d2;
+            text-align: center;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #1967d2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #174ea6;
+        }
+        #progress {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+            color: #1967d2;
+        }
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        .error {
+            background-color: #fce8e6;
+            color: #d93025;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>إدراج صورة في مستند Google</h2>
+        
+        <label for="imageFile">اختر صورة من جهازك:</label>
+        <input type="file" id="imageFile" accept="image/*">
+        
+        <label for="docId">معرف مستند Google (Document ID):</label>
+        <input type="text" id="docId" placeholder="أدخل Document ID هنا">
+        
+        <button onclick="uploadImage()">إدراج الصورة</button>
+        
+        <div id="progress">جاري معالجة الصورة وإضافتها للمستند...</div>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function uploadImage() {
+            const fileInput = document.getElementById('imageFile');
+            const docId = document.getElementById('docId').value.trim();
+            const progress = document.getElementById('progress');
+            const statusDiv = document.getElementById('status');
+            
+            // إخفاء أي رسالة سابقة
+            statusDiv.style.display = 'none';
+            
+            // التحقق من المدخلات
+            if (!fileInput.files[0]) {
+                showStatus('الرجاء اختيار صورة أولاً', 'error');
+                return;
+            }
+            
+            if (!docId) {
+                showStatus('الرجاء إدخال معرف المستند (Document ID)', 'error');
+                return;
+            }
+            
+            // إظهار مؤشر التقدم
+            progress.style.display = 'block';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result.split(',')[1]; // إزالة البادئة base64
+                
+                // إنشاء عنصر script لتنفيذ JSONP
+                const script = document.createElement('script');
+                script.src = `https://script.google.com/macros/s/AKfycbxXmkqbhYPunLdyFaRJlezsA3fVLZz4BoK33MAERfHLK3RJ-sw_AhdAZm2BjnWYpeY8/exec?callback=handleResponse&imageData=${encodeURIComponent(imageData)}&docId=${encodeURIComponent(docId)}`;
+                document.body.appendChild(script);
+                
+                // إزالة العنصر بعد الاستجابة
+                setTimeout(() => {
+                    document.body.removeChild(script);
+                }, 1000);
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+        
+        function handleResponse(response) {
+            const progress = document.getElementById('progress');
+            progress.style.display = 'none';
+            
+            if (response.success) {
+                showStatus('تم إدراج الصورة بنجاح في المستند!', 'success');
+            } else {
+                showStatus('حدث خطأ: ' + response.message, 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+            statusDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
