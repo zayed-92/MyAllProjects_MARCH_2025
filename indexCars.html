@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📷 قراءة لوحات المركبات</title>
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
@@ -20,12 +19,10 @@
     <button onclick="startCamera()">📸 تشغيل الكاميرا الخلفية</button>
     <canvas id="canvas" style="display:none;"></canvas>
     <p id="result">🔍 انتظر قراءة لوحة المركبة...</p>
-    <canvas id="canvasOutput"></canvas>
-
+    
     <script>
         let video = document.getElementById('video');
         let canvas = document.getElementById('canvas');
-        let canvasOutput = document.getElementById('canvasOutput');
         let context = canvas.getContext('2d');
         let scanning = false;
 
@@ -43,43 +40,25 @@
         function scanLicensePlate() {
             if (!scanning) return;
 
-            // ضبط حجم الكانفاس
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvasOutput.width = video.videoWidth;
-            canvasOutput.height = video.videoHeight;
-
+            // رسم الفيديو على الكانفاس
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            let src = cv.imread(canvas);
-            let dst = new cv.Mat();
 
-            // **تحويل الصورة إلى تدرجات الرمادي**
-            cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
-
-            // **تطبيق العتبة التكيفية لإزالة الخلفية**
-cv.adaptiveThreshold(src, dst, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 15, 5);
-
-            // **تحسين التباين**
-            cv.convertScaleAbs(dst, dst, 1.5, 0);
-
-            // **تحسين الحواف باستخدام Canny Edge Detection**
-            cv.Canny(dst, dst, 50, 150);
-
-            cv.imshow('canvasOutput', dst); // عرض الصورة قبل تحليل النص
-
-            src.delete(); 
-            dst.delete();
+            // استخراج صورة من الكانفاس
+            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            let image = imageData.data;
 
             // قراءة النص باستخدام Tesseract.js
             Tesseract.recognize(
-    canvas, // جرّب تمرير الكانفاس الأساسي بدلاً من `canvasOutput`
-    'eng+ara',
-    { logger: (m) => console.log(m) }
-).then(({ data: { text } }) => {
-    document.getElementById('result').innerText = "النص الموجود: " + text;
-});
+                image, // الصورة المستخرجة من الكاميرا
+                'eng+ara',  // اللغتين: الإنجليزية والعربية
+                {
+                    logger: (m) => console.log(m) // لعرض تقدم العملية
+                }
+            ).then(({ data: { text } }) => {
+                document.getElementById('result').innerText = "النص الموجود: " + text;
+            });
 
-
+            // استمر في المسح
             requestAnimationFrame(scanLicensePlate);
         }
     </script>
