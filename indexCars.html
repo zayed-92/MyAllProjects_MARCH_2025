@@ -72,12 +72,13 @@ cv.adaptiveThreshold(src, dst, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY,
 
             // قراءة النص باستخدام Tesseract.js
             Tesseract.recognize(
-                canvasOutput,
-                'eng+ara',
-                { logger: (m) => console.log(m) }
-            ).then(({ data: { text } }) => {
-                document.getElementById('result').innerText = "النص الموجود: " + text;
-            });
+    canvas, // جرّب تمرير الكانفاس الأساسي بدلاً من `canvasOutput`
+    'eng+ara',
+    { logger: (m) => console.log(m) }
+).then(({ data: { text } }) => {
+    document.getElementById('result').innerText = "النص الموجود: " + text;
+});
+
 
             requestAnimationFrame(scanLicensePlate);
         }
