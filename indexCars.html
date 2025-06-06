@@ -65,7 +65,8 @@ cv.adaptiveThreshold(src, dst, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY,
             // **تحسين الحواف باستخدام Canny Edge Detection**
             cv.Canny(dst, dst, 50, 150);
 
-            cv.imshow('canvasOutput', dst);
+            cv.imshow('canvasOutput', dst); // عرض الصورة قبل تحليل النص
+
             src.delete(); 
             dst.delete();
 
