@@ -57,7 +57,7 @@
             cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
 
             // **تطبيق العتبة التكيفية لإزالة الخلفية**
-            cv.adaptiveThreshold(src, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+cv.adaptiveThreshold(src, dst, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 15, 5);
 
             // **تحسين التباين**
             cv.convertScaleAbs(dst, dst, 1.5, 0);
